@@ -85,15 +85,14 @@ def list_versions(client, bucket, batch_size):
     kwargs = {'Bucket': bucket, 'MaxKeys': batch_size}
     truncated = True
     while truncated:
-        listing = client.list_object_versions(**kwargs)
+        listing = client.list_objects_v2(**kwargs)
 
-        kwargs['KeyMarker'] = listing.get('NextKeyMarker')
-        kwargs['VersionIdMarker'] = listing.get('NextVersionIdMarker')
+        kwargs['ContinuationToken'] = listing.get('NextContinuationToken')
         truncated = listing['IsTruncated']
 
-        objs = listing.get('Versions', []) + listing.get('DeleteMarkers', [])
+        objs = listing.get('Contents', [])
         if len(objs):
-            yield [{'Key': o['Key'], 'VersionId': o['VersionId']} for o in objs]
+            yield [{'Key': o['Key']} for o in objs]
 
 def nuke_bucket(client, bucket):
     batch_size = 128

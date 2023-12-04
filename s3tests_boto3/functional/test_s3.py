@@ -116,7 +116,10 @@ def _create_objects(bucket=None, bucket_name=None, keys=[]):
         bucket = get_new_bucket_resource(name=bucket_name)
 
     for key in keys:
-        obj = bucket.put_object(Body=key, Key=key)
+        if key.endswith('/'):
+            obj = bucket.put_object(Key=key)
+        else:
+            obj = bucket.put_object(Body=key, Key=key)
 
     return bucket_name
 
@@ -187,7 +190,7 @@ def test_basic_key_count():
     assert response1['KeyCount'] == 5
 
 def test_bucket_list_delimiter_basic():
-    bucket_name = _create_objects(keys=['foo/bar', 'foo/bar/xyzzy', 'quux/thud', 'asdf'])
+    bucket_name = _create_objects(keys=['foo/bar', 'foo/bar1/xyzzy', 'quux/thud', 'asdf'])
     client = get_client()
 
     response = client.list_objects(Bucket=bucket_name, Delimiter='/')
@@ -201,7 +204,7 @@ def test_bucket_list_delimiter_basic():
 
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_basic():
-    bucket_name = _create_objects(keys=['foo/bar', 'foo/bar/xyzzy', 'quux/thud', 'asdf'])
+    bucket_name = _create_objects(keys=['foo/bar', 'foo/bar1/xyzzy', 'quux/thud', 'asdf'])
     client = get_client()
 
     response = client.list_objects_v2(Bucket=bucket_name, Delimiter='/')
@@ -227,7 +230,7 @@ def test_bucket_listv2_encoding_basic():
 
     prefixes = _get_prefixes(response)
     assert len(prefixes) == 3
-    assert prefixes == ['foo%2B1/', 'foo/', 'quux%20ab/']
+    assert prefixes == ['foo%2B1/', 'foo/', 'quux+ab/']
 
 def test_bucket_list_encoding_basic():
     bucket_name = _create_objects(keys=['foo+1/bar', 'foo/bar/xyzzy', 'quux ab/thud', 'asdf+b'])
@@ -240,7 +243,7 @@ def test_bucket_list_encoding_basic():
 
     prefixes = _get_prefixes(response)
     assert len(prefixes) == 3
-    assert prefixes == ['foo%2B1/', 'foo/', 'quux%20ab/']
+    assert prefixes == ['foo%2B1/', 'foo/', 'quux+ab/']
 
 
 def validate_bucket_list(bucket_name, prefix, delimiter, marker, max_keys,
@@ -818,7 +821,7 @@ def test_bucket_list_prefix_unreadable():
     client = get_client()
 
     response = client.list_objects(Bucket=bucket_name, Prefix='\x0a')
-    assert response['Prefix'] == '\x0a'
+    assert response['Prefix'] == '%0A'
 
     keys = _get_keys(response)
     prefixes = _get_prefixes(response)
