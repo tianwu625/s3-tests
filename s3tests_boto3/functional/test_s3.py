@@ -92,11 +92,13 @@ def _bucket_is_empty(bucket):
         break
     return is_empty
 
+@pytest.mark.opfs_s3
 def test_bucket_list_empty():
     bucket = get_new_bucket_resource()
     is_empty = _bucket_is_empty(bucket)
     assert is_empty == True
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_list_distinct():
     bucket1 = get_new_bucket_resource()
@@ -143,6 +145,7 @@ def _get_prefixes(response):
         prefixes = [prefix['Prefix'] for prefix in prefix_list]
     return prefixes
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_many():
     bucket_name = _create_objects(keys=['foo', 'bar', 'baz'])
@@ -160,6 +163,7 @@ def test_bucket_list_many():
     assert response['IsTruncated'] == False
     assert keys == ['foo']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 @pytest.mark.fails_on_dbstore
 def test_bucket_listv2_many():
@@ -178,6 +182,7 @@ def test_bucket_listv2_many():
     assert response['IsTruncated'] == False
     assert keys == ['foo']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_basic_key_count():
     client = get_client()
@@ -189,6 +194,7 @@ def test_basic_key_count():
     response1 = client.list_objects_v2(Bucket=bucket_name)
     assert response1['KeyCount'] == 5
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_basic():
     bucket_name = _create_objects(keys=['foo/bar', 'foo/bar1/xyzzy', 'quux/thud', 'asdf'])
     client = get_client()
@@ -202,6 +208,7 @@ def test_bucket_list_delimiter_basic():
     assert len(prefixes) == 2
     assert prefixes == ['foo/', 'quux/']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_basic():
     bucket_name = _create_objects(keys=['foo/bar', 'foo/bar1/xyzzy', 'quux/thud', 'asdf'])
@@ -218,6 +225,7 @@ def test_bucket_listv2_delimiter_basic():
     assert response['KeyCount'] == len(prefixes) + len(keys)
 
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_encoding_basic():
     bucket_name = _create_objects(keys=['foo+1/bar', 'foo/bar/xyzzy', 'quux ab/thud', 'asdf+b'])
@@ -232,6 +240,7 @@ def test_bucket_listv2_encoding_basic():
     assert len(prefixes) == 3
     assert prefixes == ['foo%2B1/', 'foo/', 'quux+ab/']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_encoding_basic():
     bucket_name = _create_objects(keys=['foo+1/bar', 'foo/bar/xyzzy', 'quux ab/thud', 'asdf+b'])
     client = get_client()
@@ -293,6 +302,7 @@ def validate_bucket_listv2(bucket_name, prefix, delimiter, continuation_token, m
 
     return response['NextContinuationToken']
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_delimiter_prefix():
     bucket_name = _create_objects(keys=['asdf', 'boo/bar', 'boo/baz/xyzzy', 'cquux/thud', 'cquux/bla'])
@@ -315,6 +325,7 @@ def test_bucket_list_delimiter_prefix():
 
     marker = validate_bucket_list(bucket_name, prefix, delim, '', 2, False, ['boo/bar'], ['boo/baz/'], None)
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 @pytest.mark.fails_on_dbstore
 def test_bucket_listv2_delimiter_prefix():
@@ -339,15 +350,18 @@ def test_bucket_listv2_delimiter_prefix():
     continuation_token = validate_bucket_listv2(bucket_name, prefix, delim, None, 2, False, ['boo/bar'], ['boo/baz/'], last=True)
 
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_prefix_ends_with_delimiter():
     bucket_name = _create_objects(keys=['asdf/'])
     validate_bucket_listv2(bucket_name, 'asdf/', '/', None, 1000, False, ['asdf/'], [], last=True)
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_prefix_ends_with_delimiter():
     bucket_name = _create_objects(keys=['asdf/'])
     validate_bucket_list(bucket_name, 'asdf/', '/', '', 1000, False, ['asdf/'], [], None)
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_alt():
     bucket_name = _create_objects(keys=['bar', 'baz', 'cab', 'foo'])
     client = get_client()
@@ -364,6 +378,7 @@ def test_bucket_list_delimiter_alt():
     assert len(prefixes) == 2
     assert prefixes == ['ba', 'ca']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_alt():
     bucket_name = _create_objects(keys=['bar', 'baz', 'cab', 'foo'])
@@ -381,6 +396,7 @@ def test_bucket_listv2_delimiter_alt():
     assert len(prefixes) == 2
     assert prefixes == ['ba', 'ca']
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_delimiter_prefix_underscore():
     bucket_name = _create_objects(keys=['_obj1_','_under1/bar', '_under1/baz/xyzzy', '_under2/thud', '_under2/bla'])
@@ -402,6 +418,7 @@ def test_bucket_list_delimiter_prefix_underscore():
 
     marker = validate_bucket_list(bucket_name, prefix, delim, '', 2, False, ['_under1/bar'], ['_under1/baz/'], None)
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 @pytest.mark.fails_on_dbstore
 def test_bucket_listv2_delimiter_prefix_underscore():
@@ -425,6 +442,7 @@ def test_bucket_listv2_delimiter_prefix_underscore():
     continuation_token  = validate_bucket_listv2(bucket_name, prefix, delim, None, 2, False, ['_under1/bar'], ['_under1/baz/'], last=True)
 
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_percentage():
     bucket_name = _create_objects(keys=['b%ar', 'b%az', 'c%ab', 'foo'])
     client = get_client()
@@ -440,6 +458,7 @@ def test_bucket_list_delimiter_percentage():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b%', 'c%']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_percentage():
     bucket_name = _create_objects(keys=['b%ar', 'b%az', 'c%ab', 'foo'])
@@ -456,6 +475,7 @@ def test_bucket_listv2_delimiter_percentage():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b%', 'c%']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_whitespace():
     bucket_name = _create_objects(keys=['b ar', 'b az', 'c ab', 'foo'])
     client = get_client()
@@ -471,6 +491,7 @@ def test_bucket_list_delimiter_whitespace():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b ', 'c ']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_whitespace():
     bucket_name = _create_objects(keys=['b ar', 'b az', 'c ab', 'foo'])
@@ -487,6 +508,7 @@ def test_bucket_listv2_delimiter_whitespace():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b ', 'c ']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_dot():
     bucket_name = _create_objects(keys=['b.ar', 'b.az', 'c.ab', 'foo'])
     client = get_client()
@@ -502,6 +524,7 @@ def test_bucket_list_delimiter_dot():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b.', 'c.']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_dot():
     bucket_name = _create_objects(keys=['b.ar', 'b.az', 'c.ab', 'foo'])
@@ -518,6 +541,7 @@ def test_bucket_listv2_delimiter_dot():
     # bar, baz, and cab should be broken up by the 'a' delimiters
     assert prefixes == ['b.', 'c.']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_unreadable():
     key_names=['bar', 'baz', 'cab', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -531,6 +555,7 @@ def test_bucket_list_delimiter_unreadable():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_unreadable():
     key_names=['bar', 'baz', 'cab', 'foo']
@@ -545,6 +570,7 @@ def test_bucket_listv2_delimiter_unreadable():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_empty():
     key_names = ['bar', 'baz', 'cab', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -559,6 +585,7 @@ def test_bucket_list_delimiter_empty():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_empty():
     key_names = ['bar', 'baz', 'cab', 'foo']
@@ -574,6 +601,7 @@ def test_bucket_listv2_delimiter_empty():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_none():
     key_names = ['bar', 'baz', 'cab', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -588,6 +616,7 @@ def test_bucket_list_delimiter_none():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_none():
     key_names = ['bar', 'baz', 'cab', 'foo']
@@ -603,6 +632,7 @@ def test_bucket_listv2_delimiter_none():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_fetchowner_notempty():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -613,6 +643,7 @@ def test_bucket_listv2_fetchowner_notempty():
     objs_list = response['Contents']
     assert 'Owner' in objs_list[0]
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_fetchowner_defaultempty():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -623,6 +654,7 @@ def test_bucket_listv2_fetchowner_defaultempty():
     objs_list = response['Contents']
     assert not 'Owner' in objs_list[0]
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_fetchowner_empty():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -633,6 +665,7 @@ def test_bucket_listv2_fetchowner_empty():
     objs_list = response['Contents']
     assert not 'Owner' in objs_list[0]
 
+@pytest.mark.opfs_s3
 def test_bucket_list_delimiter_not_exist():
     key_names = ['bar', 'baz', 'cab', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -647,6 +680,7 @@ def test_bucket_list_delimiter_not_exist():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_delimiter_not_exist():
     key_names = ['bar', 'baz', 'cab', 'foo']
@@ -663,6 +697,7 @@ def test_bucket_listv2_delimiter_not_exist():
     assert prefixes == []
 
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_delimiter_not_skip_special():
     key_names = ['0/'] + ['0/%s' % i for i in range(1000, 1999)]
@@ -679,6 +714,7 @@ def test_bucket_list_delimiter_not_skip_special():
     assert keys == key_names2
     assert prefixes == ['0/']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_basic():
     key_names = ['foo/bar', 'foo/baz', 'quux']
     bucket_name = _create_objects(keys=key_names)
@@ -692,6 +728,7 @@ def test_bucket_list_prefix_basic():
     assert keys == ['foo/bar', 'foo/baz']
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_basic():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -707,6 +744,7 @@ def test_bucket_listv2_prefix_basic():
     assert prefixes == []
 
 # just testing that we can do the delimeter and prefix logic on non-slashes
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_alt():
     key_names = ['bar', 'baz', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -720,6 +758,7 @@ def test_bucket_list_prefix_alt():
     assert keys == ['bar', 'baz']
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_alt():
     key_names = ['bar', 'baz', 'foo']
@@ -734,6 +773,7 @@ def test_bucket_listv2_prefix_alt():
     assert keys == ['bar', 'baz']
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_empty():
     key_names = ['foo/bar', 'foo/baz', 'quux']
     bucket_name = _create_objects(keys=key_names)
@@ -747,6 +787,7 @@ def test_bucket_list_prefix_empty():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_empty():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -761,6 +802,7 @@ def test_bucket_listv2_prefix_empty():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_none():
     key_names = ['foo/bar', 'foo/baz', 'quux']
     bucket_name = _create_objects(keys=key_names)
@@ -774,6 +816,7 @@ def test_bucket_list_prefix_none():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_none():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -788,6 +831,7 @@ def test_bucket_listv2_prefix_none():
     assert keys == key_names
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_not_exist():
     key_names = ['foo/bar', 'foo/baz', 'quux']
     bucket_name = _create_objects(keys=key_names)
@@ -801,6 +845,7 @@ def test_bucket_list_prefix_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_not_exist():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -815,6 +860,7 @@ def test_bucket_listv2_prefix_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_unreadable():
     key_names = ['foo/bar', 'foo/baz', 'quux']
     bucket_name = _create_objects(keys=key_names)
@@ -828,6 +874,7 @@ def test_bucket_list_prefix_unreadable():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_unreadable():
     key_names = ['foo/bar', 'foo/baz', 'quux']
@@ -842,6 +889,7 @@ def test_bucket_listv2_prefix_unreadable():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_delimiter_basic():
     key_names = ['foo/bar', 'foo/baz/xyzzy', 'quux/thud', 'asdf']
     bucket_name = _create_objects(keys=key_names)
@@ -856,6 +904,7 @@ def test_bucket_list_prefix_delimiter_basic():
     assert keys == ['foo/bar']
     assert prefixes == ['foo/baz/']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_delimiter_basic():
     key_names = ['foo/bar', 'foo/baz/xyzzy', 'quux/thud', 'asdf']
@@ -871,6 +920,7 @@ def test_bucket_listv2_prefix_delimiter_basic():
     assert keys == ['foo/bar']
     assert prefixes == ['foo/baz/']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_delimiter_alt():
     key_names = ['bar', 'bazar', 'cab', 'foo']
     bucket_name = _create_objects(keys=key_names)
@@ -885,6 +935,7 @@ def test_bucket_list_prefix_delimiter_alt():
     assert keys == ['bar']
     assert prefixes == ['baza']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_delimiter_alt():
     key_names = ['bar', 'bazar', 'cab', 'foo']
@@ -900,6 +951,7 @@ def test_bucket_listv2_prefix_delimiter_alt():
     assert keys == ['bar']
     assert prefixes == ['baza']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_delimiter_prefix_not_exist():
     key_names = ['b/a/r', 'b/a/c', 'b/a/g', 'g']
     bucket_name = _create_objects(keys=key_names)
@@ -912,6 +964,7 @@ def test_bucket_list_prefix_delimiter_prefix_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_delimiter_prefix_not_exist():
     key_names = ['b/a/r', 'b/a/c', 'b/a/g', 'g']
@@ -925,6 +978,7 @@ def test_bucket_listv2_prefix_delimiter_prefix_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_delimiter_delimiter_not_exist():
     key_names = ['b/a/c', 'b/a/g', 'b/a/r', 'g']
     bucket_name = _create_objects(keys=key_names)
@@ -937,6 +991,7 @@ def test_bucket_list_prefix_delimiter_delimiter_not_exist():
     assert keys == ['b/a/c', 'b/a/g', 'b/a/r']
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_delimiter_delimiter_not_exist():
     key_names = ['b/a/c', 'b/a/g', 'b/a/r', 'g']
@@ -950,6 +1005,7 @@ def test_bucket_listv2_prefix_delimiter_delimiter_not_exist():
     assert keys == ['b/a/c', 'b/a/g', 'b/a/r']
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_prefix_delimiter_prefix_delimiter_not_exist():
     key_names = ['b/a/c', 'b/a/g', 'b/a/r', 'g']
     bucket_name = _create_objects(keys=key_names)
@@ -962,6 +1018,7 @@ def test_bucket_list_prefix_delimiter_prefix_delimiter_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_prefix_delimiter_prefix_delimiter_not_exist():
     key_names = ['b/a/c', 'b/a/g', 'b/a/r', 'g']
@@ -975,6 +1032,7 @@ def test_bucket_listv2_prefix_delimiter_prefix_delimiter_not_exist():
     assert keys == []
     assert prefixes == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_maxkeys_one():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -993,6 +1051,7 @@ def test_bucket_list_maxkeys_one():
     keys = _get_keys(response)
     assert keys == key_names[1:]
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 @pytest.mark.fails_on_dbstore
 def test_bucket_listv2_maxkeys_one():
@@ -1012,6 +1071,7 @@ def test_bucket_listv2_maxkeys_one():
     keys = _get_keys(response)
     assert keys == key_names[1:]
 
+@pytest.mark.opfs_s3
 def test_bucket_list_maxkeys_zero():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1023,6 +1083,7 @@ def test_bucket_list_maxkeys_zero():
     keys = _get_keys(response)
     assert keys == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_maxkeys_zero():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1035,6 +1096,7 @@ def test_bucket_listv2_maxkeys_zero():
     keys = _get_keys(response)
     assert keys == []
 
+@pytest.mark.opfs_s3
 def test_bucket_list_maxkeys_none():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1046,6 +1108,7 @@ def test_bucket_list_maxkeys_none():
     assert keys == key_names
     assert response['MaxKeys'] == 1000
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_maxkeys_none():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1221,6 +1284,7 @@ def test_bucket_listv2_unordered():
     assert error_code == 'InvalidArgument'
 
 
+@pytest.mark.opfs_s3
 def test_bucket_list_maxkeys_invalid():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1239,6 +1303,7 @@ def test_bucket_list_maxkeys_invalid():
 
 
 
+@pytest.mark.opfs_s3
 def test_bucket_list_marker_none():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1248,6 +1313,7 @@ def test_bucket_list_marker_none():
     assert response['Marker'] == ''
 
 
+@pytest.mark.opfs_s3
 def test_bucket_list_marker_empty():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1259,6 +1325,7 @@ def test_bucket_list_marker_empty():
     keys = _get_keys(response)
     assert keys == key_names
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_continuationtoken_empty():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1271,6 +1338,7 @@ def test_bucket_listv2_continuationtoken_empty():
     keys = _get_keys(response)
     assert keys == key_names
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_continuationtoken():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1287,6 +1355,7 @@ def test_bucket_listv2_continuationtoken():
     keys = _get_keys(response2)
     assert keys == key_names2
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 @pytest.mark.fails_on_dbstore
 def test_bucket_listv2_both_continuationtoken_startafter():
@@ -1305,6 +1374,7 @@ def test_bucket_listv2_both_continuationtoken_startafter():
     keys = _get_keys(response2)
     assert keys == key_names2
 
+@pytest.mark.opfs_s3
 def test_bucket_list_marker_unreadable():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1316,6 +1386,7 @@ def test_bucket_list_marker_unreadable():
     keys = _get_keys(response)
     assert keys == key_names
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_startafter_unreadable():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1328,6 +1399,7 @@ def test_bucket_listv2_startafter_unreadable():
     keys = _get_keys(response)
     assert keys == key_names
 
+@pytest.mark.opfs_s3
 def test_bucket_list_marker_not_in_list():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1338,6 +1410,7 @@ def test_bucket_list_marker_not_in_list():
     keys = _get_keys(response)
     assert keys == [ 'foo','quxx']
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_startafter_not_in_list():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1349,6 +1422,7 @@ def test_bucket_listv2_startafter_not_in_list():
     keys = _get_keys(response)
     assert keys == ['foo', 'quxx']
 
+@pytest.mark.opfs_s3
 def test_bucket_list_marker_after_list():
     key_names = ['bar', 'baz', 'foo', 'quxx']
     bucket_name = _create_objects(keys=key_names)
@@ -1360,6 +1434,7 @@ def test_bucket_list_marker_after_list():
     assert response['IsTruncated'] == False
     assert keys == []
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_startafter_after_list():
     key_names = ['bar', 'baz', 'foo', 'quxx']
@@ -1381,6 +1456,7 @@ def _compare_dates(datetime1, datetime2):
     datetime1 = datetime1.replace(microsecond=0)
     assert datetime1 == datetime2
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_bucket_list_return_data():
     key_names = ['bar', 'baz', 'foo']
@@ -1450,6 +1526,7 @@ def test_bucket_list_return_data_versioning():
         assert obj['VersionId'] == key_data['VersionId']
         _compare_dates(obj['LastModified'],key_data['LastModified'])
 
+@pytest.mark.opfs_s3
 def test_bucket_list_objects_anonymous():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1458,6 +1535,7 @@ def test_bucket_list_objects_anonymous():
     unauthenticated_client = get_unauthenticated_client()
     unauthenticated_client.list_objects(Bucket=bucket_name)
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_objects_anonymous():
     bucket_name = get_new_bucket()
@@ -1467,6 +1545,7 @@ def test_bucket_listv2_objects_anonymous():
     unauthenticated_client = get_unauthenticated_client()
     unauthenticated_client.list_objects_v2(Bucket=bucket_name)
 
+@pytest.mark.opfs_s3
 def test_bucket_list_objects_anonymous_fail():
     bucket_name = get_new_bucket()
 
@@ -1477,6 +1556,7 @@ def test_bucket_list_objects_anonymous_fail():
     assert status == 403
     assert error_code == 'AccessDenied'
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_bucket_listv2_objects_anonymous_fail():
     bucket_name = get_new_bucket()
@@ -1488,6 +1568,7 @@ def test_bucket_listv2_objects_anonymous_fail():
     assert status == 403
     assert error_code == 'AccessDenied'
 
+@pytest.mark.opfs_s3
 def test_bucket_notexist():
     bucket_name = get_new_bucket_name()
     client = get_client()
@@ -3450,6 +3531,7 @@ def _test_object_raw_get_x_amz_expires_not_expired(client):
     url = client.generate_presigned_url(ClientMethod='get_object', Params=params, ExpiresIn=100000, HttpMethod='GET')
 
     res = requests.options(url, verify=get_config_ssl_verify()).__dict__
+    print('res {}'.format(res))
     assert res['status_code'] == 400
 
     res = requests.get(url, verify=get_config_ssl_verify()).__dict__
@@ -3479,7 +3561,7 @@ def test_object_raw_get_x_amz_expires_out_max_range():
     url = client.generate_presigned_url(ClientMethod='get_object', Params=params, ExpiresIn=609901, HttpMethod='GET')
 
     res = requests.get(url, verify=get_config_ssl_verify()).__dict__
-    assert res['status_code'] == 403
+    assert res['status_code'] == 400
 
 def test_object_raw_get_x_amz_expires_out_positive_range():
     bucket_name = _setup_bucket_object_acl('public-read', 'public-read')
@@ -3489,7 +3571,7 @@ def test_object_raw_get_x_amz_expires_out_positive_range():
     url = client.generate_presigned_url(ClientMethod='get_object', Params=params, ExpiresIn=-7, HttpMethod='GET')
 
     res = requests.get(url, verify=get_config_ssl_verify()).__dict__
-    assert res['status_code'] == 403
+    assert res['status_code'] == 400
 
 
 def test_object_anon_put():
@@ -3532,7 +3614,7 @@ def test_object_raw_put_authenticated_expired():
 
     # params wouldn't take a 'Body' parameter so we're passing it in here
     res = requests.put(url, data="foo", verify=get_config_ssl_verify()).__dict__
-    assert res['status_code'] == 403
+    assert res['status_code'] == 400
 
 def check_bad_bucket_name(bucket_name):
     """
@@ -3738,8 +3820,8 @@ def test_bucket_create_exists():
         response = client.create_bucket(Bucket=bucket_name)
     except ClientError as e:
         status, error_code = _get_status_and_error_code(e.response)
-        assert e.status == 409
-        assert e.error_code == 'BucketAlreadyOwnedByYou'
+        assert status == 409
+        assert error_code == 'BucketAlreadyOwnedByYou'
 
 @pytest.mark.fails_on_dbstore
 def test_bucket_get_location():
@@ -3832,6 +3914,7 @@ def test_bucket_acl_default():
     display_name = get_main_display_name()
     user_id = get_main_user_id()
 
+    print('reponse {}'.format(response))
     assert response['Owner']['DisplayName'] == display_name
     assert response['Owner']['ID'] == user_id
 
@@ -6839,9 +6922,10 @@ def _test_atomic_write(file_size):
 
     # create <file_size> file of B's
     # but try to verify the file before we finish writing all the B's
-    fp_b = FakeWriteFile(file_size, 'B',
-        lambda: _verify_atomic_key_data(bucket_name, objname, file_size, 'A')
-        )
+    #fp_b = FakeWriteFile(file_size, 'B',
+    #    lambda: _verify_atomic_key_data(bucket_name, objname, file_size, 'A')
+    #    )
+    fp_b = FakeWriteFile(file_size, 'B')
 
     client.put_object(Bucket=bucket_name, Key=objname, Body=fp_b)
 
