@@ -6340,6 +6340,75 @@ def test_multipart_upload_multiple_sizes():
     (upload_id, data, parts) = _multipart_upload(bucket_name=bucket_name, key=key, size=objlen)
     client.complete_multipart_upload(Bucket=bucket_name, Key=key, UploadId=upload_id, MultipartUpload={'Parts': parts})
 
+def _check_multipart_parts(resp_parts, parts):
+    resp_parts.sort(key=lambda x: x['PartNumber'])
+    parts.sort(key=lambda x: x['PartNumber'])
+    for i in range(len(parts)):
+        assert parts[i]['PartNumber'] == resp_parts[i]['PartNumber']
+        assert parts[i]['ETag'] == resp_parts[i]['ETag'].strip('"')
+
+@pytest.mark.opfs_s3_listparts
+@pytest.mark.opfs_s3
+def test_listparts():
+    bucket_name = get_new_bucket()
+    key = "mymultipart"
+    client = get_client()
+    objlen = 10 * 1024 * 1024
+    (upload_id, data, parts) = _multipart_upload(bucket_name=bucket_name, key=key, size=objlen)
+    resp = client.list_parts(Bucket=bucket_name, Key=key, UploadId=upload_id)
+    print('resp {}'.format(resp))
+    assert len(resp['Parts']) == 2
+    assert resp['Initiator']['ID'] == get_main_user_id()
+    assert resp['MaxParts'] == 1000
+    assert resp['StorageClass'] == 'STANDARD'
+    _check_multipart_parts(resp['Parts'], parts)
+    client.abort_multipart_upload(Bucket=bucket_name, Key=key, UploadId=upload_id)
+
+@pytest.mark.opfs_s3_listparts
+@pytest.mark.opfs_s3
+def test_listparts_many():
+    bucket_name = get_new_bucket()
+    key = "mymultipart"
+    client = get_client()
+    objlen = 20 * 1024 * 1024
+    (upload_id, data, parts) = _multipart_upload(bucket_name=bucket_name, key=key, size=objlen)
+    resp = client.list_parts(Bucket=bucket_name, Key=key, UploadId=upload_id, MaxParts=2)
+    assert len(resp['Parts']) == 2
+    _check_multipart_parts(resp['Parts'], parts[:2])
+    assert resp['IsTruncated'] == True
+    assert resp['MaxParts'] == 2
+    nextMark = resp['NextPartNumberMarker']
+    resp = client.list_parts(Bucket=bucket_name, Key=key, UploadId=upload_id, PartNumberMarker=nextMark)
+    assert len(resp['Parts']) == 2
+    _check_multipart_parts(resp['Parts'], parts[2:])
+    assert resp['IsTruncated'] == False
+    client.abort_multipart_upload(Bucket=bucket_name, Key=key, UploadId=upload_id)
+
+@pytest.mark.opfs_s3_listparts
+@pytest.mark.opfs_s3
+def test_listparts_empty():
+    bucket_name = get_new_bucket()
+    key="mymultipart"
+    client = get_client()
+    response = client.create_multipart_upload(Bucket=bucket_name, Key=key)
+    upload_id = response['UploadId']
+    resp = client.list_parts(Bucket=bucket_name, Key=key, UploadId=upload_id)
+    assert resp.get('Parts') == None
+    assert resp['IsTruncated'] == False
+    client.abort_multipart_upload(Bucket=bucket_name, Key=key, UploadId=upload_id)
+
+@pytest.mark.opfs_s3_listparts
+@pytest.mark.opfs_s3
+def test_listparts_notexist_uploadId():
+    bucket_name = get_new_bucket()
+    key="mymultipart"
+    upload_id = "7c255321-1d08-495e-b8fe-9d630c1b9639"
+    client = get_client()
+    e = assert_raises(ClientError, client.list_parts, Bucket=bucket_name, Key=key, UploadId=upload_id)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 404
+    assert error_code == 'NoSuchUpload'
+
 @pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_multipart_copy_multiple_sizes():
