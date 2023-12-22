@@ -1665,6 +1665,7 @@ def test_object_write_to_nonexist_bucket():
 def _ev_add_te_header(request, **kwargs):
     request.headers.add_header('Transfer-Encoding', 'chunked')
 
+@pytest.mark.opfs_s3
 def test_object_write_with_chunked_transfer_encoding():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1674,7 +1675,7 @@ def test_object_write_with_chunked_transfer_encoding():
 
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200
 
-
+@pytest.mark.opfs_s3
 def test_bucket_create_delete():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1686,6 +1687,7 @@ def test_bucket_create_delete():
     assert status == 404
     assert error_code == 'NoSuchBucket'
 
+@pytest.mark.opfs_s3
 def test_object_read_not_exist():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1702,6 +1704,7 @@ def get_http_response(**kwargs):
     global http_response
     http_response = kwargs['http_response'].__dict__
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_object_requestid_matches_header_on_error():
     bucket_name = get_new_bucket()
@@ -1759,6 +1762,7 @@ def test_versioning_concurrent_multi_object_delete():
     response = client.list_objects(Bucket=bucket_name)
     assert 'Contents' not in response
 
+@pytest.mark.opfs_s3
 def test_multi_object_delete():
     key_names = ['key0', 'key1', 'key2']
     bucket_name = _create_objects(keys=key_names)
@@ -1780,6 +1784,7 @@ def test_multi_object_delete():
     response = client.list_objects(Bucket=bucket_name)
     assert 'Contents' not in response
 
+@pytest.mark.opfs_s3
 @pytest.mark.list_objects_v2
 def test_multi_objectv2_delete():
     key_names = ['key0', 'key1', 'key2']
@@ -1802,6 +1807,7 @@ def test_multi_objectv2_delete():
     response = client.list_objects_v2(Bucket=bucket_name)
     assert 'Contents' not in response
 
+@pytest.mark.opfs_s3
 def test_multi_object_delete_key_limit():
     key_names = [f"key-{i}" for i in range(1001)]
     bucket_name = _create_objects(keys=key_names)
@@ -1819,6 +1825,7 @@ def test_multi_object_delete_key_limit():
     status, error_code = _get_status_and_error_code(e.response)
     assert status == 400
 
+@pytest.mark.opfs_s3
 def test_multi_objectv2_delete_key_limit():
     key_names = [f"key-{i}" for i in range(1001)]
     bucket_name = _create_objects(keys=key_names)
@@ -1836,6 +1843,7 @@ def test_multi_objectv2_delete_key_limit():
     status, error_code = _get_status_and_error_code(e.response)
     assert status == 400
 
+@pytest.mark.opfs_s3
 def test_object_head_zero_bytes():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1844,6 +1852,7 @@ def test_object_head_zero_bytes():
     response = client.head_object(Bucket=bucket_name, Key='foo')
     assert response['ContentLength'] == 0
 
+@pytest.mark.opfs_s3
 def test_object_write_check_etag():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1851,6 +1860,7 @@ def test_object_write_check_etag():
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200
     assert response['ETag'] == '"37b51d194a7513e45b56f6524f2d51f2"'
 
+@pytest.mark.opfs_s3
 def test_object_write_cache_control():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1860,6 +1870,7 @@ def test_object_write_cache_control():
     response = client.head_object(Bucket=bucket_name, Key='foo')
     assert response['ResponseMetadata']['HTTPHeaders']['cache-control'] == cache_control
 
+@pytest.mark.opfs_s3
 def test_object_write_expires():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1878,6 +1889,7 @@ def _get_body(response):
         got = got.decode()
     return got
 
+@pytest.mark.opfs_s3
 def test_object_write_read_update_read_delete():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1914,14 +1926,17 @@ def _set_get_metadata(metadata, bucket_name=None):
     response = client.get_object(Bucket=bucket_name, Key='foo')
     return response['Metadata']['meta1']
 
+@pytest.mark.opfs_s3
 def test_object_set_get_metadata_none_to_good():
     got = _set_get_metadata('mymeta')
     assert got == 'mymeta'
 
+@pytest.mark.opfs_s3
 def test_object_set_get_metadata_none_to_empty():
     got = _set_get_metadata('')
     assert got == ''
 
+@pytest.mark.opfs_s3
 def test_object_set_get_metadata_overwrite_to_empty():
     bucket_name = get_new_bucket()
     got = _set_get_metadata('oldmeta', bucket_name)
@@ -1963,6 +1978,7 @@ def _set_get_metadata_unreadable(metadata, bucket_name=None):
     e = assert_raises(ClientError, client.put_object, Bucket=bucket_name, Key='bar', Metadata=metadata_dict)
     return e
 
+@pytest.mark.opfs_s3
 def test_object_metadata_replaced_on_put():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -1975,6 +1991,7 @@ def test_object_metadata_replaced_on_put():
     got = response['Metadata']
     assert got == {}
 
+@pytest.mark.opfs_s3
 def test_object_write_file():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3065,6 +3082,7 @@ def test_post_object_empty_conditions():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
 def test_get_object_ifmatch_good():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3075,6 +3093,7 @@ def test_get_object_ifmatch_good():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
 def test_get_object_ifmatch_failed():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3085,6 +3104,7 @@ def test_get_object_ifmatch_failed():
     assert status == 412
     assert error_code == 'PreconditionFailed'
 
+@pytest.mark.opfs_s3
 def test_get_object_ifnonematch_good():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3096,6 +3116,7 @@ def test_get_object_ifnonematch_good():
     assert status == 304
     assert e.response['Error']['Message'] == 'Not Modified'
 
+@pytest.mark.opfs_s3
 def test_get_object_ifnonematch_failed():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3105,6 +3126,7 @@ def test_get_object_ifnonematch_failed():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
 def test_get_object_ifmodifiedsince_good():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3114,6 +3136,7 @@ def test_get_object_ifmodifiedsince_good():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_get_object_ifmodifiedsince_failed():
     bucket_name = get_new_bucket()
@@ -3135,6 +3158,7 @@ def test_get_object_ifmodifiedsince_failed():
     assert status == 304
     assert e.response['Error']['Message'] == 'Not Modified'
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_get_object_ifunmodifiedsince_good():
     bucket_name = get_new_bucket()
@@ -3146,6 +3170,7 @@ def test_get_object_ifunmodifiedsince_good():
     assert status == 412
     assert error_code == 'PreconditionFailed'
 
+@pytest.mark.opfs_s3
 def test_get_object_ifunmodifiedsince_failed():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3155,7 +3180,7 @@ def test_get_object_ifunmodifiedsince_failed():
     body = _get_body(response)
     assert body == 'bar'
 
-
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 def test_put_object_ifmatch_good():
     bucket_name = get_new_bucket()
@@ -3177,6 +3202,7 @@ def test_put_object_ifmatch_good():
     body = _get_body(response)
     assert body == 'zar'
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_dbstore
 def test_put_object_ifmatch_failed():
     bucket_name = get_new_bucket()
@@ -3199,6 +3225,7 @@ def test_put_object_ifmatch_failed():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 def test_put_object_ifmatch_overwrite_existed_good():
     bucket_name = get_new_bucket()
@@ -3234,6 +3261,7 @@ def test_put_object_ifmatch_nonexisted_failed():
     assert status == 404
     assert error_code == 'NoSuchKey'
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 def test_put_object_ifnonmatch_good():
     bucket_name = get_new_bucket()
@@ -3335,6 +3363,7 @@ def _setup_bucket_acl(bucket_acl=None):
 
     return bucket_name
 
+@pytest.mark.opfs_s3
 def test_object_raw_get():
     bucket_name = _setup_bucket_object_acl('public-read', 'public-read')
 
@@ -3342,6 +3371,7 @@ def test_object_raw_get():
     response = unauthenticated_client.get_object(Bucket=bucket_name, Key='foo')
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200
 
+@pytest.mark.opfs_s3
 def test_object_raw_get_bucket_gone():
     bucket_name = _setup_bucket_object_acl('public-read', 'public-read')
     client = get_client()
@@ -3356,6 +3386,7 @@ def test_object_raw_get_bucket_gone():
     assert status == 404
     assert error_code == 'NoSuchBucket'
 
+@pytest.mark.opfs_s3
 def test_object_delete_key_bucket_gone():
     bucket_name = _setup_bucket_object_acl('public-read', 'public-read')
     client = get_client()
@@ -3370,6 +3401,7 @@ def test_object_delete_key_bucket_gone():
     assert status == 404
     assert error_code == 'NoSuchBucket'
 
+@pytest.mark.opfs_s3
 def test_object_raw_get_object_gone():
     bucket_name = _setup_bucket_object_acl('public-read', 'public-read')
     client = get_client()
@@ -4763,7 +4795,6 @@ def test_bucket_acl_grant_nonexist_user():
     assert status == 404
     assert error_code == 'XMinioAdminNoSuchUser'
 
-@pytest.mark.opfs_s3
 def test_bucket_acl_no_grants():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -5027,7 +5058,6 @@ def test_bucket_acl_grant_email_not_exist():
     assert status == 400
     assert error_code == 'UnresolvableGrantByEmailAddress'
 
-@pytest.mark.opfs_s3
 def test_bucket_acl_revoke_all():
     # revoke all access, including the owner's access
     bucket_name = get_new_bucket()
@@ -7071,7 +7101,6 @@ def _test_atomic_read(file_size):
 def test_atomic_read_1mb():
     _test_atomic_read(1024*1024)
 
-@pytest.mark.opfs_s3
 def test_atomic_read_4mb():
     _test_atomic_read(1024*1024*4)
 
@@ -7112,12 +7141,15 @@ def _test_atomic_write(file_size):
     # verify B's
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
+@pytest.mark.opfs_s3
 def test_atomic_write_1mb():
     _test_atomic_write(1024*1024)
 
+@pytest.mark.opfs_s3
 def test_atomic_write_4mb():
     _test_atomic_write(1024*1024*4)
 
+@pytest.mark.opfs_s3
 def test_atomic_write_8mb():
     _test_atomic_write(1024*1024*8)
 
@@ -7145,12 +7177,15 @@ def _test_atomic_dual_write(file_size):
     # verify the file
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
+@pytest.mark.opfs_s3
 def test_atomic_dual_write_1mb():
     _test_atomic_dual_write(1024*1024)
 
+@pytest.mark.opfs_s3
 def test_atomic_dual_write_4mb():
     _test_atomic_dual_write(1024*1024*4)
 
+@pytest.mark.opfs_s3
 def test_atomic_dual_write_8mb():
     _test_atomic_dual_write(1024*1024*8)
 
@@ -7183,6 +7218,7 @@ def _test_atomic_conditional_write(file_size):
     # verify B's
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 def test_atomic_conditional_write_1mb():
     _test_atomic_conditional_write(1024*1024)
@@ -7220,12 +7256,14 @@ def _test_atomic_dual_conditional_write(file_size):
     # verify the file
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 # TODO: test not passing with SSL, fix this
 @pytest.mark.fails_on_rgw
 def test_atomic_dual_conditional_write_1mb():
     _test_atomic_dual_conditional_write(1024*1024)
 
+@pytest.mark.opfs_s3
 @pytest.mark.fails_on_aws
 # TODO: test not passing with SSL, fix this
 @pytest.mark.fails_on_rgw
