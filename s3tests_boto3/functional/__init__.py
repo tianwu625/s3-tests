@@ -135,7 +135,13 @@ bucket cleanup'.format(bucket, delta.total_seconds()))
                     Delete={'Objects': objects, 'Quiet': True},
                     BypassGovernanceRetention=True)
 
-    client.delete_bucket(Bucket=bucket)
+    try:
+        client.delete_bucket(Bucket=bucket)
+    except Exception as e:
+        status, error_code = e.response['ResponseMetadata']['HTTPStatusCode'], e.response['Error']['Code']
+        if status != 409 or error_code != 'BucketNotEmpty':
+            raise e
+
 
 def nuke_prefixed_buckets(prefix, client=None):
     if client == None:
