@@ -7055,13 +7055,17 @@ def _test_atomic_read(file_size):
     _verify_atomic_key_data(bucket_name, 'testobj', file_size, 'B')
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_read_1mb():
     _test_atomic_read(1024*1024)
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_read_4mb():
     _test_atomic_read(1024*1024*4)
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_read_8mb():
     _test_atomic_read(1024*1024*8)
 
@@ -7099,14 +7103,17 @@ def _test_atomic_write(file_size):
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_write_1mb():
     _test_atomic_write(1024*1024)
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_write_4mb():
     _test_atomic_write(1024*1024*4)
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_write_8mb():
     _test_atomic_write(1024*1024*8)
 
@@ -7135,14 +7142,17 @@ def _test_atomic_dual_write(file_size):
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_dual_write_1mb():
     _test_atomic_dual_write(1024*1024)
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_dual_write_4mb():
     _test_atomic_dual_write(1024*1024*4)
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_dual_write_8mb():
     _test_atomic_dual_write(1024*1024*8)
 
@@ -7176,6 +7186,7 @@ def _test_atomic_conditional_write(file_size):
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 @pytest.mark.fails_on_aws
 def test_atomic_conditional_write_1mb():
     _test_atomic_conditional_write(1024*1024)
@@ -7214,6 +7225,7 @@ def _test_atomic_dual_conditional_write(file_size):
     _verify_atomic_key_data(bucket_name, objname, file_size, 'B')
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 @pytest.mark.fails_on_aws
 # TODO: test not passing with SSL, fix this
 @pytest.mark.fails_on_rgw
@@ -7240,6 +7252,7 @@ def test_atomic_write_bucket_gone():
     assert error_code == 'NoSuchBucket'
 
 @pytest.mark.opfs_s3
+@pytest.mark.opfs_not_fast
 def test_atomic_multipart_upload_write():
     bucket_name = get_new_bucket()
     client = get_client()
