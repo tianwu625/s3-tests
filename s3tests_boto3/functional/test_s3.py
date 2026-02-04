@@ -2002,6 +2002,8 @@ def _get_post_url(bucket_name):
     endpoint = get_config_endpoint()
     return '{endpoint}/{bucket_name}'.format(endpoint=endpoint, bucket_name=bucket_name)
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_anonymous_request():
     bucket_name = get_new_bucket_name()
     client = get_client()
@@ -2009,13 +2011,15 @@ def test_post_object_anonymous_request():
     payload = OrderedDict([("key" , "foo.txt"),("acl" , "public-read"),\
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 204
     response = client.get_object(Bucket=bucket_name, Key='foo.txt')
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_authenticated_request():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2054,10 +2058,12 @@ def test_post_object_authenticated_request():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_authenticated_no_content_type():
     bucket_name = get_new_bucket_name()
     client = get_client()
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
 
 
     url = _get_post_url(bucket_name)
@@ -2091,10 +2097,12 @@ def test_post_object_authenticated_no_content_type():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_authenticated_request_bad_access_key():
     bucket_name = get_new_bucket_name()
     client = get_client()
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
 
     url = _get_post_url(bucket_name)
     utc = pytz.utc
@@ -2126,10 +2134,12 @@ def test_post_object_authenticated_request_bad_access_key():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_set_success_code():
     bucket_name = get_new_bucket_name()
     client = get_client()
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
 
     url = _get_post_url(bucket_name)
     payload = OrderedDict([("key" , "foo.txt"),("acl" , "public-read"),\
@@ -2141,10 +2151,12 @@ def test_post_object_set_success_code():
     message = ET.fromstring(r.content).find('Key')
     assert message.text == 'foo.txt'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_set_invalid_success_code():
     bucket_name = get_new_bucket_name()
     client = get_client()
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
 
     url = _get_post_url(bucket_name)
     payload = OrderedDict([("key" , "foo.txt"),("acl" , "public-read"),\
@@ -2156,6 +2168,8 @@ def test_post_object_set_invalid_success_code():
     content = r.content.decode()
     assert content == ''
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_upload_larger_than_chunk():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2195,6 +2209,8 @@ def test_post_object_upload_larger_than_chunk():
     body = _get_body(response)
     assert body == foo_string
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_set_key_from_filename():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2231,6 +2247,8 @@ def test_post_object_set_key_from_filename():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_ignored_header():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2265,6 +2283,8 @@ def test_post_object_ignored_header():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 204
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_case_insensitive_condition_fields():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2300,6 +2320,8 @@ def test_post_object_case_insensitive_condition_fields():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 204
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_escaped_field_values():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2336,10 +2358,12 @@ def test_post_object_escaped_field_values():
     body = _get_body(response)
     assert body == 'bar'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_success_redirect_action():
     bucket_name = get_new_bucket_name()
     client = get_client()
-    client.create_bucket(ACL='public-read-write', Bucket=bucket_name)
+    client.create_bucket(Bucket=bucket_name)
 
     url = _get_post_url(bucket_name)
     redirect_url = _get_post_url(bucket_name)
@@ -2375,9 +2399,11 @@ def test_post_object_success_redirect_action():
     assert r.status_code == 200
     url = r.url
     response = client.get_object(Bucket=bucket_name, Key='foo.txt')
-    assert url == '{rurl}?bucket={bucket}&key={key}&etag=%22{etag}%22'.format(\
+    assert url == '{rurl}?bucket={bucket}&etag=%22{etag}%22&key={key}'.format(\
     rurl = redirect_url, bucket = bucket_name, key = 'foo.txt', etag = response['ETag'].strip('"'))
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_invalid_signature():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2411,6 +2437,8 @@ def test_post_object_invalid_signature():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_invalid_access_key():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2444,6 +2472,8 @@ def test_post_object_invalid_access_key():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_invalid_date_format():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2475,8 +2505,10 @@ def test_post_object_invalid_date_format():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_no_key_specified():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2509,6 +2541,8 @@ def test_post_object_no_key_specified():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_missing_signature():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2542,6 +2576,8 @@ def test_post_object_missing_signature():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_missing_policy_condition():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2574,6 +2610,8 @@ def test_post_object_missing_policy_condition():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_user_specified_header():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2610,6 +2648,8 @@ def test_post_object_user_specified_header():
     response = client.get_object(Bucket=bucket_name, Key='foo.txt')
     assert response['Metadata']['foo'] == 'barclamp'
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_request_missing_policy_specified_field():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2644,6 +2684,8 @@ def test_post_object_request_missing_policy_specified_field():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_condition_is_case_sensitive():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2675,8 +2717,10 @@ def test_post_object_condition_is_case_sensitive():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_expires_is_case_sensitive():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2708,8 +2752,10 @@ def test_post_object_expires_is_case_sensitive():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_expired_policy():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2743,6 +2789,8 @@ def test_post_object_expired_policy():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_wrong_bucket():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2779,6 +2827,8 @@ def test_post_object_wrong_bucket():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_invalid_request_field_value():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2812,6 +2862,8 @@ def test_post_object_invalid_request_field_value():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_missing_expires_condition():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2843,8 +2895,10 @@ def test_post_object_missing_expires_condition():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_missing_conditions_list():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2868,8 +2922,10 @@ def test_post_object_missing_conditions_list():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_upload_size_limit_exceeded():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2903,6 +2959,8 @@ def test_post_object_upload_size_limit_exceeded():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_missing_content_length_argument():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2934,8 +2992,10 @@ def test_post_object_missing_content_length_argument():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_invalid_content_length_argument():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -2969,6 +3029,8 @@ def test_post_object_invalid_content_length_argument():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_upload_size_below_minimum():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3002,6 +3064,8 @@ def test_post_object_upload_size_below_minimum():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 400
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_upload_size_rgw_chunk_size_bug():
     # Test for https://tracker.ceph.com/issues/58627
     # TODO: if this value is different in Teuthology runs, this would need tuning
@@ -3049,6 +3113,8 @@ def test_post_object_upload_size_rgw_chunk_size_bug():
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
     assert r.status_code == 204
 
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_post_object
 def test_post_object_empty_conditions():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -3076,7 +3142,7 @@ def test_post_object_empty_conditions():
     ("Content-Type" , "text/plain"),('file', ('bar'))])
 
     r = requests.post(url, files=payload, verify=get_config_ssl_verify())
-    assert r.status_code == 400
+    assert r.status_code == 403
 
 @pytest.mark.opfs_s3
 def test_get_object_ifmatch_good():
