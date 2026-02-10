@@ -13383,3 +13383,113 @@ def test_get_object_torrent():
         status, error_code = _get_status_and_error_code(e.response)
         assert status == 404
         assert error_code == 'NoSuchKey'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    #append object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10)
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '12345678901234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_len0():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    #append object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=0)
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_append_len0():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    #append object to put object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=0)
+    #append object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10)
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '12345678901234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_ifmatch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    etag = response['ETag']
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10, IfMatch=etag)
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '12345678901234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_ifmatch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    e = assert_raises(ClientError, client.put_object, Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10, IfMatch='"ABCORZ"')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_ifnonematch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    etag = response['ETag']
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10, IfNoneMatch='"ABCORZ"')
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '12345678901234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_ifnonematch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    etag = response['ETag']
+    e = assert_raises(ClientError, client.put_object, Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10, IfNoneMatch=etag)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 304
+    assert error_code == '304'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_more():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    #append object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=10)
+    #append object
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=20)
+    response = client.get_object(Bucket=bucket_name, Key='appendKey')
+    body = _get_body(response)
+    assert body == '123456789012345678901234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_append_object
+def test_append_object_size_mismatch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='appendKey', Body='1234567890')
+    #append object
+    e = assert_raises(ClientError, client.put_object, Bucket=bucket_name, Key='appendKey', Body='1234567890', WriteOffsetBytes=1)
+    print(e.response)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 400
+    assert error_code == 'InvalidWriteOffset'
