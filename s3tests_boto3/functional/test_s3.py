@@ -13493,3 +13493,375 @@ def test_append_object_size_mismatch():
     status, error_code = _get_status_and_error_code(e.response)
     assert status == 400
     assert error_code == 'InvalidWriteOffset'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_nonesource():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 500
+    assert error_code == 'InternalError'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_existdest():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcematch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    etag = response['ETag']
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfMatch=etag)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcematch_existdest():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    etag = response['ETag']
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfMatch=etag)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcematch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfMatch='"ABCORZ"')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcenonematch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfNoneMatch='"ABCORZ"')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcenonematch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    response = client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    etag = response['ETag']
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfNoneMatch=etag)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 304
+    assert error_code == '304'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifsourcenonematch_allfail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfNoneMatch='*')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestmatch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    etag = response['ETag']
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfMatch=etag)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestmatch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    etag = response['ETag']
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfMatch='"ABCORZ"')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestnonematch():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    etag = response['ETag']
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfNoneMatch='"ABCORZ"')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestnonematch_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    etag = response['ETag']
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfNoneMatch=etag)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 304
+    assert error_code == '304'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestnonematch_all():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfNoneMatch='*')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifdestnonematch_allfail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.put_object(Bucket=bucket_name, Key='renameDest', Body='0987654321')
+    etag = response['ETag']
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '0987654321'
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfNoneMatch='*')
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_sourceifmodifiedsince():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameSource')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    before = mtime - datetime.timedelta(seconds=1)
+    before_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', before.timetuple())
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfModifiedSince=before_str)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_sourceifmodifiedsince_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameSource')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    after = mtime + datetime.timedelta(seconds=1)
+    after_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', after.timetuple())
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfModifiedSince=after_str)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 304
+    assert error_code == '304'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_sourceifunmodifiedsince():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameSource')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    after = mtime + datetime.timedelta(seconds=1)
+    after_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', after.timetuple())
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfUnmodifiedSince=after_str)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_sourceifunmodifiedsince_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameSource')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    before = mtime - datetime.timedelta(seconds=1)
+    before_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', before.timetuple())
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', SourceIfUnmodifiedSince=before_str)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifmodifiedsince():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    before = mtime - datetime.timedelta(seconds=1)
+    before_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', before.timetuple())
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfModifiedSince=before_str)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifmodifiedsince_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    after = mtime + datetime.timedelta(seconds=1)
+    after_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', after.timetuple())
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfModifiedSince=after_str)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 304
+    assert error_code == '304'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifunmodifiedsince():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    after = mtime + datetime.timedelta(seconds=1)
+    after_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', after.timetuple())
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfUnmodifiedSince=after_str)
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_ifunmodifiedsince_fail():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    client.put_object(Bucket=bucket_name, Key='renameDest', Body='1234567890')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    last_modified = str(response['LastModified'])
+    last_modified = last_modified.split('+')[0]
+    mtime = datetime.datetime.strptime(last_modified, '%Y-%m-%d %H:%M:%S')
+    before = mtime - datetime.timedelta(seconds=1)
+    before_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', before.timetuple())
+    #rename object
+    e = assert_raises(ClientError, client.rename_object, Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', DestinationIfUnmodifiedSince=before_str)
+    status, error_code = _get_status_and_error_code(e.response)
+    assert status == 412
+    assert error_code == 'PreconditionFailed'
+
+@pytest.mark.opfs_s3
+@pytest.mark.opfs_s3_rename_object
+def test_rename_object_clienttoken_ignore():
+    bucket_name = get_new_bucket()
+    client = get_client()
+    client.put_object(Bucket=bucket_name, Key='renameSource', Body='1234567890')
+    #rename object
+    client.rename_object(Bucket=bucket_name, Key='renameDest', RenameSource='renameSource', ClientToken='abcdef')
+    response = client.get_object(Bucket=bucket_name, Key='renameDest')
+    body = _get_body(response)
+    assert body == '1234567890'
